@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Game Hub</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0c0a09; /* Stone-900 equivalent */
+            min-height: 100vh;
+            color: #fca311; /* Amber/Orange main color */
+        }
+        .container-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- Clicker Styles --- */
+        .nexus-core {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fcd34d 0%, #f97316 60%, #dc2626 100%);
+            box-shadow: 0 0 50px #f97316, 0 0 15px #fcd34d, inset 0 0 20px #dc2626;
+            transition: all 0.1s ease-out;
+            border: 8px solid #fed7aa;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            animation: pulse 2s infinite alternate;
+        }
+        .nexus-core:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 20px #f97316, 0 0 5px #fcd34d;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.02); opacity: 0.95; }
+        }
+        #clicker-score-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            text-shadow: 0 0 10px #f97316;
+        }
+        #click-fx {
+            position: absolute;
+            font-size: 2rem;
+            color: #fcd34d;
+            font-weight: 900;
+            pointer-events: none;
+            opacity: 0;
+            transition: none;
+            z-index: 10;
+        }
+        .fade-out {
+            animation: fade-up 0.5s ease-out forwards;
+        }
+        @keyframes fade-up {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        /* --- Tic-Tac-Toe Styles --- */
+        .tictactoe-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 300px;
+            height: 300px;
+            gap: 5px;
+            background-color: #1f2937;
+            border-radius: 8px;
+            padding: 5px;
+            box-shadow: 0 0 20px #2a6fbd;
+        }
+        .tictactoe-cell {
+            background-color: #0c0a09;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            font-weight: 700;
+            color: #fcd34d;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .tictactoe-cell:hover {
+            background-color: #1f2937;
+        }
+        .tictactoe-cell:active {
+            transform: scale(0.98);
+        }
+        .cell-x { color: #fed7aa; }
+        .cell-o { color: #4c84d7; }
+
+        /* --- Memory Code Styles --- */
+        .code-button {
+            width: 100%;
+            height: 100px;
+            border: 4px solid #1f2937;
+            border-radius: 8px;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .code-button:active {
+            transform: scale(0.95);
+        }
+        .code-button-red { background-color: #dc2626; }
+        .code-button-blue { background-color: #2563eb; }
+        .code-button-green { background-color: #10b981; }
+        .code-button-yellow { background-color: #fcd34d; }
+        .active-glow {
+            box-shadow: 0 0 20px 5px var(--glow-color);
+            transform: scale(1.05);
+        }
+
+        /* --- Match Game Styles --- */
+        .match-card {
+            background-color: #1f2937;
+            border: 3px solid #6b7280;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            perspective: 1000px;
+            transition: transform 0.6s;
+            height: 100%;
+        }
+        .match-card-inner {
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+        }
+        .flipped .match-card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        .card-back {
+            background-color: #4c84d7;
+            color: #1f2937;
+            font-weight: 700;
+        }
+        .card-front {
+            background-color: #fcd34d;
+            color: #0c0a09;
+            transform: rotateY(180deg);
+            font-size: 1.5rem;
+        }
+        .matched {
+            pointer-events: none;
+            opacity: 0.5;
+            transition: opacity 0.5s;
+        }
+
+        /* --- Reaction Game Styles --- */
+        .reaction-target {
+            width: 100%;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            transition: background-color 0.1s;
+        }
+
+        /* --- General Styles --- */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1f2937;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            text-align: center;
+            border: 2px solid #fca311;
+            max-width: 90vw;
+        }
+    </style>
+</head>
+<body class="text-white">
+
+    <div id="app" class="p-4 md:p-8 max-w-lg mx-auto container-center">
+        <!-- Header -->
+        <header class="text-center mb-6 w-full">
+            <h1 class="text-5xl font-extrabold text-white mb-2">Nexus Game Hub</h1>
+            <p id="user-id-display" class="text-xs text-gray-500 truncate mt-1">User ID: Loading...</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="flex justify-center bg-[#1f2937] p-1 rounded-xl mb-8 w-full shadow-xl">
+            <button class="tab-button w-1/5 py-3 px-1 rounded-lg font-semibold text-xs md:text-base transition-colors duration-200" data-game="clicker">Clicker</button>
+            <button class="tab-button w-1/5 py-3 px-1 rounded-lg font-semibold text-xs md:text-base transition-colors duration-200" data-game="tictactoe">Tic-Tac-Toe</button>
+            <button class="tab-button w-1/5 py-3 px-1 rounded-lg font-semibold text-xs md:text-base transition-colors duration-200" data-game="memory">Memory</button>
+            <button class="tab-button w-1/5 py-3 px-1 rounded-lg font-semibold text-xs md:text-base transition-colors duration-200" data-game="match">Match</button>
+            <button class="tab-button w-1/5 py-3 px-1 rounded-lg font-semibold text-xs md:text-base transition-colors duration-200" data-game="reaction">Reaction</button>
+        </div>
+
+        <!-- --- GAME CONTAINERS --- -->
+
+        <!-- Game 1: Cosmic Clicker (Persistent Score) -->
+        <div id="game-clicker" class="game-container container-center hidden w-full">
+            <h2 class="text-3xl font-bold text-[#fcd34d] mb-4">Cosmic Clicker</h2>
+            <div class="mb-12 p-4 rounded-xl bg-[#1f2937] border border-gray-600 shadow-xl">
+                <p class="text-lg font-semibold text-gray-300">Total Energy:</p>
+                <div id="clicker-score-display">0</div>
+            </div>
+
+            <div class="relative">
+                <button id="nexus-core" class="nexus-core mb-4" onclick="handleCoreClick(event)">
+                    <span class="text-2xl font-bold text-gray-900">NEXUS CORE</span>
+                    <span class="text-sm text-gray-900">Click to Generate</span>
+                </button>
+                <div id="click-fx"></div>
+            </div>
+
+            <p id="auth-status" class="text-sm text-gray-400 mt-4">Authenticating...</p>
+        </div>
+
+        <!-- Game 2: Cosmic Tic-Tac-Toe -->
+        <div id="game-tictactoe" class="game-container container-center hidden w-full">
+            <h2 class="text-3xl font-bold text-[#4c84d7] mb-4">Cosmic Tic-Tac-Toe</h2>
+            <p id="tictactoe-status" class="text-lg mb-4 text-white font-semibold">Player X's Turn</p>
+
+            <div id="tictactoe-board" class="tictactoe-board">
+                <!-- Cells generated by JS -->
+            </div>
+
+            <button onclick="resetTicTacToe()" class="bg-[#4c84d7] hover:bg-[#2a6fbd] text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg mt-8 active:scale-95 transform">
+                Restart Game
+            </button>
+        </div>
+
+        <!-- Game 3: Celestial Memory Code -->
+        <div id="game-memory" class="game-container container-center hidden w-full">
+            <h2 class="text-3xl font-bold text-[#10b981] mb-4">Celestial Memory Code</h2>
+            <div class="p-4 bg-[#1f2937] rounded-xl shadow-xl border border-gray-600 mb-6 w-full text-center">
+                <p class="text-lg font-semibold text-gray-300">Current Level: <span id="memory-level">1</span></p>
+                <p id="memory-status" class="text-xl mt-2 font-bold">Press START to begin.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 w-full mb-6">
+                <button id="code-0" class="code-button code-button-red text-2xl font-bold text-gray-900" style="--glow-color: #dc2626" onclick="handleCodeClick(0)">R</button>
+                <button id="code-1" class="code-button code-button-blue text-2xl font-bold text-gray-900" style="--glow-color: #2563eb" onclick="handleCodeClick(1)">B</button>
+                <button id="code-2" class="code-button code-button-green text-2xl font-bold text-gray-900" style="--glow-color: #10b981" onclick="handleCodeClick(2)">G</button>
+                <button id="code-3" class="code-button code-button-yellow text-2xl font-bold text-gray-900" style="--glow-color: #fcd34d" onclick="handleCodeClick(3)">Y</button>
+            </div>
+
+            <button id="memory-start-button" onclick="startMemoryGame()" class="bg-[#10b981] hover:bg-[#047857] text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg active:scale-95 transform">
+                Start Sequence (Level 1)
+            </button>
+        </div>
+        
+        <!-- Game 4: Cosmic Match -->
+        <div id="game-match" class="game-container container-center hidden w-full">
+            <h2 class="text-3xl font-bold text-[#a855f7] mb-4">Cosmic Match</h2>
+            <div class="p-4 bg-[#1f2937] rounded-xl shadow-xl border border-gray-600 mb-6 w-full text-center">
+                <p class="text-lg font-semibold text-gray-300">Matches Found: <span id="match-score">0 / 8</span></p>
+                <p id="match-status" class="text-xl mt-2 font-bold text-white">Click START to begin.</p>
+            </div>
+
+            <div id="match-board" class="grid grid-cols-4 gap-2 w-[300px] h-[300px] mb-6">
+                <!-- Cards generated by JS -->
+            </div>
+
+            <button id="match-start-button" onclick="startMatchGame()" class="bg-[#a855f7] hover:bg-[#9333ea] text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg active:scale-95 transform">
+                Start Game
+            </button>
+        </div>
+        
+        <!-- Game 5: Quick Color Reaction -->
+        <div id="game-reaction" class="game-container container-center hidden w-full">
+            <h2 class="text-3xl font-bold text-[#ef4444] mb-4">Quick Color Reaction</h2>
+            <div class="p-4 bg-[#1f2937] rounded-xl shadow-xl border border-gray-600 mb-6 w-full text-center">
+                <p class="text-lg font-semibold text-gray-300">Score: <span id="reaction-score">0</span></p>
+                <p id="reaction-timer" class="text-xl mt-2 font-bold text-white">Best Time: -- ms</p>
+                <p id="reaction-status" class="text-lg text-red-400 font-semibold mt-2">Click GO to start!</p>
+            </div>
+
+            <button id="reaction-target-button" onclick="handleReactionClick()" class="reaction-target mb-6 bg-gray-700" disabled>
+                Wait for GO...
+            </button>
+
+            <button id="reaction-start-button" onclick="startReactionGame()" class="bg-[#ef4444] hover:bg-[#b91c1c] text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg active:scale-95 transform">
+                GO!
+            </button>
+        </div>
+
+
+        <!-- Custom Message Box for Errors/Info -->
+        <div id="message-modal" class="hidden">
+            <div class="message-box">
+                <p id="modal-message" class="text-white mb-4"></p>
+                <button onclick="document.getElementById('message-modal').classList.add('hidden')" class="bg-[#4c84d7] hover:bg-[#2a6fbd] text-white font-bold py-2 px-4 rounded-lg transition">
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Imports & Game Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db = null;
+        let auth = null;
+        let userId = null;
+        
+        // --- Shared Game/App State ---
+        let currentGame = 'clicker'; 
+        let clickerScore = 0;
+        let saveTimeout = null;
+
+        // Element references
+        const clickerScoreDisplay = document.getElementById('clicker-score-display');
+        const authStatus = document.getElementById('auth-status');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const messageModal = document.getElementById('message-modal');
+        const modalMessage = document.getElementById('modal-message');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const gameContainers = document.querySelectorAll('.game-container');
+
+        setLogLevel('Debug');
+
+        // --- Utility Functions ---
+
+        window.displayModal = (message) => {
+            modalMessage.textContent = message;
+            messageModal.classList.remove('hidden');
+        };
+
+        function showGame(gameId) {
+            gameContainers.forEach(container => {
+                container.classList.add('hidden');
+            });
+            document.getElementById(`game-${gameId}`).classList.remove('hidden');
+            
+            tabButtons.forEach(button => {
+                button.classList.remove('bg-[#fca311]', 'text-gray-900');
+                button.classList.add('text-gray-400');
+            });
+
+            const activeTab = document.querySelector(`.tab-button[data-game="${gameId}"]`);
+            if (activeTab) {
+                activeTab.classList.add('bg-[#fca311]', 'text-gray-900');
+                activeTab.classList.remove('text-gray-400');
+            }
+            currentGame = gameId;
+        }
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                showGame(button.dataset.game);
+            });
+        });
+
+        // Set initial view
+        showGame('clicker');
+
+        // --- FIREBASE AND CLICKER GAME LOGIC ---
+
+        async function initializeFirebase() {
+            if (!firebaseConfig) {
+                authStatus.textContent = 'Error: Firebase config missing.';
+                window.displayModal('Firebase configuration is missing. Cannot save score.');
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        authStatus.textContent = 'Authenticated. Ready to play!';
+                        userIdDisplay.textContent = `User ID: ${userId}`;
+                        setupRealtimeListener();
+                    } else {
+                        authStatus.textContent = 'Awaiting authentication...';
+                        userIdDisplay.textContent = 'User ID: Not Signed In';
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                authStatus.textContent = 'Error: Initialization failed.';
+                window.displayModal(`Authentication failed: ${error.message}. Score saving disabled.`);
+            }
+        }
+
+        function getScoreDocRef() {
+            if (!userId || !db) return null;
+            // Path: /artifacts/{appId}/users/{userId}/game_data/clicker_score
+            return doc(db, 'artifacts', appId, 'users', userId, 'game_data', 'clicker_score');
+        }
+
+        function setupRealtimeListener() {
+            const scoreDocRef = getScoreDocRef();
+            if (!scoreDocRef) return;
+
+            onSnapshot(scoreDocRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const data = docSnapshot.data();
+                    const loadedScore = data.energy || 0;
+                    if (loadedScore > clickerScore) {
+                        clickerScore = loadedScore;
+                        clickerScoreDisplay.textContent = clickerScore.toLocaleString();
+                        console.log(`Clicker score loaded from Firestore: ${clickerScore}`);
+                    }
+                } else {
+                    console.log("No clicker score found. Starting new game.");
+                    saveClickerScore(true);
+                }
+            }, (error) => {
+                console.error("Error setting up score listener:", error);
+            });
+        }
+
+        function saveClickerScore(immediate = false) {
+            if (!db || !userId) return;
+
+            if (saveTimeout) {
+                clearTimeout(saveTimeout);
+                saveTimeout = null;
+            }
+
+            const executeSave = async () => {
+                try {
+                    const scoreDocRef = getScoreDocRef();
+                    if (scoreDocRef) {
+                        await setDoc(scoreDocRef, { energy: clickerScore, lastUpdated: new Date() }, { merge: true });
+                        console.log(`Clicker score saved: ${clickerScore}`);
+                    }
+                } catch (error) {
+                    console.error("Error saving score to Firestore:", error);
+                }
+            };
+
+            if (immediate) {
+                executeSave();
+            } else {
+                // Throttle saves to every 2 seconds
+                saveTimeout = setTimeout(executeSave, 2000);
+            }
+        }
+
+        window.handleCoreClick = (event) => {
+            clickerScore += 1;
+            clickerScoreDisplay.textContent = clickerScore.toLocaleString();
+            saveClickerScore();
+            
+            // Visual feedback (Click FX)
+            const clickFx = document.getElementById('click-fx');
+            clickFx.style.left = `${event.clientX}px`;
+            clickFx.style.top = `${event.clientY}px`;
+            clickFx.textContent = '+1';
+            clickFx.classList.remove('fade-out');
+            void clickFx.offsetWidth;
+            clickFx.classList.add('fade-out');
+        };
+
+        // --- TIC-TAC-TOE LOGIC ---
+
+        const tictactoeBoardElement = document.getElementById('tictactoe-board');
+        const tictactoeStatus = document.getElementById('tictactoe-status');
+        let board = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let gameActive = true;
+        const winningConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6]             // Diagonals
+        ];
+
+        function checkResult() {
+            let roundWon = false;
+            for (let i = 0; i < winningConditions.length; i++) {
+                const winCondition = winningConditions[i];
+                let a = board[winCondition[0]];
+                let b = board[winCondition[1]];
+                let c = board[winCondition[2]];
+                if (a === '' || b === '' || c === '') continue;
+                if (a === b && b === c) {
+                    roundWon = true;
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                tictactoeStatus.textContent = `Player ${currentPlayer} Wins! 🚀`;
+                gameActive = false;
+                return;
+            }
+
+            let roundDraw = !board.includes('');
+            if (roundDraw) {
+                tictactoeStatus.textContent = 'Game Draw!';
+                gameActive = false;
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            tictactoeStatus.textContent = `Player ${currentPlayer}'s Turn`;
+        }
+
+        function handleCellClick(clickedCellIndex) {
+            if (!gameActive || board[clickedCellIndex] !== '') return;
+
+            board[clickedCellIndex] = currentPlayer;
+            const clickedCell = tictactoeBoardElement.children[clickedCellIndex];
+            clickedCell.textContent = currentPlayer;
+            clickedCell.classList.add(`cell-${currentPlayer.toLowerCase()}`);
+
+            checkResult();
+        }
+
+        window.resetTicTacToe = () => {
+            board = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            gameActive = true;
+            tictactoeStatus.textContent = "Player X's Turn";
+            renderTicTacToeBoard();
+        };
+
+        function renderTicTacToeBoard() {
+            tictactoeBoardElement.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'tictactoe-cell';
+                cell.setAttribute('data-index', i);
+                cell.addEventListener('click', () => handleCellClick(i));
+                cell.textContent = board[i];
+                cell.classList.add(`cell-${board[i].toLowerCase()}`);
+                tictactoeBoardElement.appendChild(cell);
+            }
+        }
+
+        // --- CELESTIAL MEMORY CODE LOGIC (Simon Says) ---
+
+        const memoryStatus = document.getElementById('memory-status');
+        const memoryLevelDisplay = document.getElementById('memory-level');
+        const memoryStartButton = document.getElementById('memory-start-button');
+        const codeButtons = document.querySelectorAll('#game-memory .code-button');
+
+        let sequence = [];
+        let playerSequence = [];
+        let level = 1;
+        let isPlaying = false;
+        let isInputEnabled = false;
+
+        function setMemoryStatus(message, color = 'text-white') {
+            memoryStatus.className = `text-xl mt-2 font-bold ${color}`;
+            memoryStatus.textContent = message;
+        }
+
+        function generateSequence() {
+            sequence.push(Math.floor(Math.random() * 4));
+            playerSequence = [];
+            level = sequence.length;
+            memoryLevelDisplay.textContent = level;
+        }
+
+        function highlightButton(index, duration = 300) {
+            const button = codeButtons[index];
+            const colorClass = button.style.getPropertyValue('--glow-color');
+            
+            button.classList.add('active-glow');
+            
+            setTimeout(() => {
+                button.classList.remove('active-glow');
+            }, duration);
+        }
+
+        async function playSequence() {
+            isInputEnabled = false;
+            setMemoryStatus('Watch the sequence!', 'text-yellow-400');
+            memoryStartButton.disabled = true;
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            for (let i = 0; i < sequence.length; i++) {
+                highlightButton(sequence[i]);
+                await new Promise(resolve => setTimeout(resolve, 600));
+            }
+
+            setMemoryStatus('Your turn! Click the sequence.', 'text-green-400');
+            isInputEnabled = true;
+            memoryStartButton.disabled = false;
+        }
+
+        window.startMemoryGame = () => {
+            if (isPlaying) {
+                level = 1;
+                sequence = [];
+            }
+            isPlaying = true;
+            generateSequence();
+            playSequence();
+            memoryStartButton.textContent = 'Sequence Playing...';
+        };
+
+        window.handleCodeClick = (index) => {
+            if (!isPlaying || !isInputEnabled) return;
+
+            highlightButton(index, 150);
+
+            playerSequence.push(index);
+            const currentStep = playerSequence.length - 1;
+
+            if (playerSequence[currentStep] !== sequence[currentStep]) {
+                // FAIL
+                setMemoryStatus(`CODE FAILED! Reached Level ${level}.`, 'text-red-400');
+                window.displayModal(`Code Failed! You reached Level ${level}. Restarting from Level 1.`);
+                isPlaying = false;
+                level = 1;
+                sequence = [];
+                memoryLevelDisplay.textContent = level;
+                memoryStartButton.textContent = 'Start Sequence (Level 1)';
+                isInputEnabled = false;
+                return;
+            }
+
+            if (playerSequence.length === sequence.length) {
+                // SUCCESS
+                setMemoryStatus(`SUCCESS! Advancing to Level ${level + 1}.`, 'text-blue-400');
+                memoryStartButton.textContent = `Start Sequence (Level ${level + 1})`;
+                isInputEnabled = false;
+                
+                setTimeout(() => {
+                    generateSequence();
+                    playSequence();
+                }, 1500);
+            }
+        };
+
+        // --- COSMIC MATCH LOGIC ---
+        const matchBoardElement = document.getElementById('match-board');
+        const matchStatus = document.getElementById('match-status');
+        const matchScoreDisplay = document.getElementById('match-score');
+
+        const cardEmojis = ["🪐", "💫", "🌑", "🌟", "✨", "☄️", "🛰️", "🚀"];
+        let matchCards = [];
+        let firstCard = null;
+        let secondCard = null;
+        let matchesFound = 0;
+        let canClick = true;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function createMatchBoard() {
+            matchBoardElement.innerHTML = '';
+            
+            // Duplicate and shuffle
+            matchCards = [...cardEmojis, ...cardEmojis];
+            shuffle(matchCards);
+
+            for (let i = 0; i < matchCards.length; i++) {
+                const cardValue = matchCards[i];
+                const card = document.createElement('div');
+                card.className = 'match-card';
+                card.dataset.index = i;
+                card.innerHTML = `
+                    <div class="match-card-inner">
+                        <div class="card-face card-back">HUB</div>
+                        <div class="card-face card-front">${cardValue}</div>
+                    </div>
+                `;
+                card.addEventListener('click', handleMatchCardClick);
+                matchBoardElement.appendChild(card);
+            }
+        }
+
+        function handleMatchCardClick(event) {
+            if (!canClick) return;
+
+            const cardElement = event.currentTarget;
+            if (cardElement.classList.contains('flipped') || cardElement.classList.contains('matched')) return;
+
+            cardElement.classList.add('flipped');
+            
+            if (!firstCard) {
+                firstCard = cardElement;
+            } else {
+                secondCard = cardElement;
+                canClick = false; // Disable clicks until check is complete
+                
+                setTimeout(checkMatch, 1000);
+            }
+        }
+
+        function checkMatch() {
+            const firstValue = firstCard.querySelector('.card-front').textContent;
+            const secondValue = secondCard.querySelector('.card-front').textContent;
+
+            if (firstValue === secondValue) {
+                // Match found!
+                firstCard.classList.add('matched');
+                secondCard.classList.add('matched');
+                matchesFound++;
+                matchScoreDisplay.textContent = `${matchesFound} / 8`;
+                matchStatus.textContent = 'Pair found! Keep going.';
+                
+                if (matchesFound === 8) {
+                    matchStatus.textContent = 'SUCCESS! All Pairs Matched!';
+                    window.displayModal('Congratulations! You matched all the Cosmic Pairs!');
+                }
+            } else {
+                // No match, flip back
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                matchStatus.textContent = 'No match, try again.';
+            }
+
+            // Reset selection for next turn
+            firstCard = null;
+            secondCard = null;
+            canClick = true;
+        }
+
+        window.startMatchGame = () => {
+            matchesFound = 0;
+            matchScoreDisplay.textContent = '0 / 8';
+            matchStatus.textContent = 'Find the Cosmic Pairs!';
+            firstCard = null;
+            secondCard = null;
+            canClick = true;
+            createMatchBoard();
+        };
+
+        // --- QUICK COLOR REACTION LOGIC ---
+        const reactionStartButton = document.getElementById('reaction-start-button');
+        const reactionTargetButton = document.getElementById('reaction-target-button');
+        const reactionScoreDisplay = document.getElementById('reaction-score');
+        const reactionTimerDisplay = document.getElementById('reaction-timer');
+        const reactionStatus = document.getElementById('reaction-status');
+
+        const colors = ['bg-red-500', 'bg-blue-500', 'bg-yellow-500', 'bg-purple-500'];
+        const targetColor = 'bg-green-500';
+        const statusColors = { READY: 'text-white', WAIT: 'text-yellow-400', CLICK: 'text-green-400', FAIL: 'text-red-400' };
+
+        let reactionScore = 0;
+        let gameInterval = null;
+        let isWaitingForTarget = false;
+        let isTargetActive = false;
+        let targetStartTime = 0;
+        let bestReactionTime = Infinity;
+
+        function setReactionState(colorClass, statusMsg, statusColor) {
+            reactionTargetButton.className = `reaction-target mb-6 ${colorClass}`;
+            reactionTargetButton.textContent = statusMsg;
+            reactionStatus.className = `text-lg font-semibold mt-2 ${statusColor}`;
+            reactionStatus.textContent = statusMsg;
+        }
+
+        function resetReactionGame() {
+            clearInterval(gameInterval);
+            gameInterval = null;
+            isWaitingForTarget = false;
+            isTargetActive = false;
+            reactionScore = 0;
+            reactionTargetButton.disabled = true;
+            reactionScoreDisplay.textContent = '0';
+            reactionStartButton.textContent = 'GO!';
+            setReactionState('bg-gray-700', 'Click GO to start!', statusColors.READY);
+            reactionStartButton.onclick = startReactionGame;
+            reactionTargetButton.onclick = handleReactionClick; // Reset back to default error handler
+        }
+
+        window.startReactionGame = () => {
+            resetReactionGame();
+            reactionStartButton.textContent = 'Stop Game';
+            reactionStartButton.onclick = resetReactionGame;
+            reactionTargetButton.disabled = false;
+            
+            reactionTargetButton.textContent = 'Wait for GREEN';
+            setReactionState('bg-gray-700', 'WAITING...', statusColors.WAIT);
+            isWaitingForTarget = true;
+            
+            // Start interval to change colors
+            gameInterval = setInterval(randomColorChange, 1000 + Math.random() * 1000); // 1 to 2 seconds
+        };
+
+        function randomColorChange() {
+            if (!isWaitingForTarget) return;
+
+            const shouldActivateTarget = Math.random() < 0.33; // 33% chance to turn green
+            
+            if (shouldActivateTarget && !isTargetActive) {
+                // TARGET ACTIVATED (Green)
+                setReactionState(targetColor, 'CLICK NOW!', statusColors.CLICK);
+                isTargetActive = true;
+                targetStartTime = Date.now();
+                reactionTargetButton.onclick = handleSuccessfulClick; // Only successful click handler when green
+                
+            } else if (!isTargetActive) {
+                // Random non-target color
+                const nonTargetColors = colors.filter(c => c !== targetColor);
+                const randomColor = nonTargetColors[Math.floor(Math.random() * nonTargetColors.length)];
+                setReactionState(randomColor, 'WRONG COLOR', statusColors.WAIT);
+                reactionTargetButton.onclick = handleReactionClick; // Wrong color click handler
+            }
+        }
+        
+        window.handleReactionClick = () => {
+            if (!isTargetActive && isWaitingForTarget) {
+                // FAIL: Clicked the wrong color
+                clearInterval(gameInterval);
+                setReactionState('bg-black', 'TOO EARLY! Game Over.', statusColors.FAIL);
+                reactionStartButton.textContent = 'Retry';
+                reactionStartButton.onclick = startReactionGame;
+                window.displayModal(`Game Over! You clicked too early or on the wrong color. Final Score: ${reactionScore}`);
+                reactionTargetButton.disabled = true;
+            }
+        };
+
+        function handleSuccessfulClick() {
+            if (!isTargetActive) return;
+
+            const reactionTime = Date.now() - targetStartTime;
+            isTargetActive = false;
+            reactionScore++;
+            reactionScoreDisplay.textContent = reactionScore;
+            
+            if (reactionTime < bestReactionTime) {
+                bestReactionTime = reactionTime;
+                reactionTimerDisplay.textContent = `Best Time: ${bestReactionTime} ms`;
+            } else {
+                reactionTimerDisplay.textContent = `Time: ${reactionTime} ms`;
+            }
+            
+            // Reset to gray and continue waiting phase
+            setReactionState('bg-gray-700', 'WAITING...', statusColors.WAIT);
+            reactionTargetButton.onclick = handleReactionClick;
+        }
+
+
+        // Start Firebase initialization once the window is loaded
+        window.onload = () => {
+             initializeFirebase();
+             renderTicTacToeBoard();
+             // Initial setup for other games
+             startMatchGame();
+             resetReactionGame();
+        }
+    </script>
+</body>
+</html>
